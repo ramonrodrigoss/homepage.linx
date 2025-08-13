@@ -1,0 +1,50 @@
+name: Deploy Homepage to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Instalar dependências
+        run: |
+          corepack enable
+          pnpm install
+
+      - name: Build do Homepage
+        run: pnpm build
+
+      - name: Adicionar .nojekyll
+        run: touch build/.nojekyll
+
+      - name: Upload da build como artefato
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: build
+
+  deploy:
+    needs: build-deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy para GitHub Pages
+        uses: actions/deploy-pages@v2
